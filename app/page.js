@@ -101,7 +101,7 @@ export default function ARPage() {
       {/* 🎥 AR SCENE */}
       <a-scene
         mindar-image="
-          imageTargetSrc: /targets.mind;
+          imageTargetSrc: /targetsnew.mind;
           filterMinCF: 0.0005;
           filterBeta: 15;
         "
