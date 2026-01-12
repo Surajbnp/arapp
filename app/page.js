@@ -29,12 +29,12 @@ export default function ARPage() {
       });
   }, []);
 
-  // 2️⃣ Handle target found / lost
+  // 2️⃣ Play / pause on target found / lost
   useEffect(() => {
     if (!ready) return;
 
     const scene = document.querySelector("a-scene");
-    const video = document.getElementById("ar-video") ;
+    const video = document.getElementById("ar-video");
 
     if (!scene || !video) return;
 
@@ -47,7 +47,7 @@ export default function ARPage() {
     });
   }, [ready]);
 
-  // 3️⃣ FORCE WebGL canvas behind UI (CRITICAL FIX)
+  // 3️⃣ FORCE WebGL canvas behind UI
   useEffect(() => {
     if (!ready) return;
 
@@ -56,7 +56,7 @@ export default function ARPage() {
       if (canvas) {
         canvas.style.position = "fixed";
         canvas.style.inset = "0";
-        canvas.style.zIndex = "1"; // behind UI
+        canvas.style.zIndex = "1";
         clearInterval(interval);
       }
     }, 100);
@@ -64,7 +64,7 @@ export default function ARPage() {
     return () => clearInterval(interval);
   }, [ready]);
 
-  // 4️⃣ Toggle sound (user gesture = allowed)
+  // 4️⃣ Toggle sound (user gesture)
   const toggleSound = () => {
     const video = document.getElementById("ar-video");
     if (!video) return;
@@ -74,7 +74,6 @@ export default function ARPage() {
     setIsMuted(video.muted);
   };
 
-  // Loading state
   if (!ready) {
     return (
       <div
@@ -100,7 +99,7 @@ export default function ARPage() {
         overflow: "hidden",
       }}
     >
-      {/* 🔊 UI OVERLAY (ALWAYS ON TOP) */}
+      {/* 🔊 UI OVERLAY */}
       <div
         style={{
           position: "fixed",
@@ -131,7 +130,11 @@ export default function ARPage() {
 
       {/* 🎥 AR SCENE */}
       <a-scene
-        mindar-image="imageTargetSrc: /targets.mind;"
+        mindar-image="
+          imageTargetSrc: /targets.mind;
+          filterMinCF: 0.001;
+          filterBeta: 10;
+        "
         embedded
         vr-mode-ui="enabled: false"
         device-orientation-permission-ui="enabled: true"
@@ -160,7 +163,12 @@ export default function ARPage() {
             src="#ar-video"
             width="1"
             height="0.6"
-            position="0 0 0"
+            position="0 0 0.01"
+            scale="1 1 1"
+            smooth="true"
+            smoothCount="10"
+            smoothTolerance="0.01"
+            smoothThreshold="2"
           />
         </a-entity>
       </a-scene>
