@@ -7,7 +7,7 @@ export default function ARPage() {
   const [ready, setReady] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
 
-  // 1️⃣ Load A-Frame first, then MindAR (ORDER MATTERS)
+  // 1️⃣ Load A-Frame → then MindAR (ORDER IS CRITICAL)
   useEffect(() => {
     const loadScript = (src) =>
       new Promise((resolve) => {
@@ -24,12 +24,10 @@ export default function ARPage() {
           "https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"
         )
       )
-      .then(() => {
-        setReady(true);
-      });
+      .then(() => setReady(true));
   }, []);
 
-  // 2️⃣ Play / pause on target found / lost
+  // 2️⃣ Play / pause video on image found / lost
   useEffect(() => {
     if (!ready) return;
 
@@ -38,16 +36,11 @@ export default function ARPage() {
 
     if (!scene || !video) return;
 
-    scene.addEventListener("targetFound", () => {
-      video.play();
-    });
-
-    scene.addEventListener("targetLost", () => {
-      video.pause();
-    });
+    scene.addEventListener("targetFound", () => video.play());
+    scene.addEventListener("targetLost", () => video.pause());
   }, [ready]);
 
-  // 3️⃣ FORCE WebGL canvas behind UI
+  // 3️⃣ Force WebGL canvas behind UI (mandatory for overlays)
   useEffect(() => {
     if (!ready) return;
 
@@ -64,7 +57,7 @@ export default function ARPage() {
     return () => clearInterval(interval);
   }, [ready]);
 
-  // 4️⃣ Toggle sound (user gesture)
+  // 4️⃣ Toggle audio (user gesture)
   const toggleSound = () => {
     const video = document.getElementById("ar-video");
     if (!video) return;
@@ -76,44 +69,21 @@ export default function ARPage() {
 
   if (!ready) {
     return (
-      <div
-        style={{
-          height: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          fontSize: "18px",
-        }}
-      >
+      <div style={{ height: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
         Loading AR…
       </div>
     );
   }
 
   return (
-    <div
-      id="ar-root"
-      style={{
-        position: "fixed",
-        inset: 0,
-        overflow: "hidden",
-      }}
-    >
+    <div style={{ position: "fixed", inset: 0, overflow: "hidden" }}>
       {/* 🔊 UI OVERLAY */}
-      <div
-        style={{
-          position: "fixed",
-          bottom: "20px",
-          left: "20px",
-          zIndex: 99999,
-          pointerEvents: "auto",
-        }}
-      >
+      <div style={{ position: "fixed", bottom: 20, left: 20, zIndex: 99999 }}>
         <button
           onClick={toggleSound}
           style={{
-            width: "48px",
-            height: "48px",
+            width: 48,
+            height: 48,
             borderRadius: "50%",
             border: "none",
             background: "rgba(0,0,0,0.8)",
@@ -121,7 +91,7 @@ export default function ARPage() {
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            fontSize: "20px",
+            fontSize: 20,
           }}
         >
           {isMuted ? <FaVolumeMute /> : <FaVolumeUp />}
@@ -132,17 +102,13 @@ export default function ARPage() {
       <a-scene
         mindar-image="
           imageTargetSrc: /targets.mind;
-          filterMinCF: 0.001;
-          filterBeta: 10;
+          filterMinCF: 0.0005;
+          filterBeta: 15;
         "
         embedded
         vr-mode-ui="enabled: false"
         device-orientation-permission-ui="enabled: true"
-        style={{
-          position: "fixed",
-          inset: 0,
-          zIndex: 1,
-        }}
+        style={{ position: "fixed", inset: 0, zIndex: 1 }}
       >
         <a-assets>
           <video
@@ -158,18 +124,30 @@ export default function ARPage() {
 
         <a-camera position="0 0 0" look-controls="enabled: false" />
 
-        <a-entity mindar-image-target="targetIndex: 0">
-          <a-video
-            src="#ar-video"
+        {/* 🧲 STABILIZED IMAGE ANCHOR */}
+        <a-entity mindar-image-target="targetIndex: 0" rotation="0 0 0">
+          {/* 🔒 INVISIBLE STABILITY PLANE */}
+          <a-plane
             width="1"
             height="0.6"
-            position="0 0 0.01"
-            scale="1 1 1"
-            smooth="true"
-            smoothCount="10"
-            smoothTolerance="0.01"
-            smoothThreshold="2"
-          />
+            position="0 0 0"
+            rotation="0 0 0"
+            material="opacity: 0"
+          >
+            {/* 🎬 VIDEO LOCKED INSIDE IMAGE */}
+            <a-video
+              src="#ar-video"
+              width="0.92"
+              height="0.52"
+              position="0 0 0.01"
+              rotation="0 0 0"
+              scale="1 1 1"
+              smooth="true"
+              smoothCount="18"
+              smoothTolerance="0.004"
+              smoothThreshold="1"
+            />
+          </a-plane>
         </a-entity>
       </a-scene>
     </div>
